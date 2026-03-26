@@ -1,4 +1,6 @@
 mod utils;
+use std::fs;
+
 use clap::Parser;
 
 use crate::utils::{tokens::generate_tokens, version::get_version};
@@ -18,9 +20,14 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    if args.tokens {
-        generate_tokens();
+    if let Some(file) = args.file {
+        let content = fs::read_to_string(file).expect("failed to read file");
+
+        if args.tokens {
+            generate_tokens(&content);
+        }
     }
+
     if args.version {
         get_version();
     }
