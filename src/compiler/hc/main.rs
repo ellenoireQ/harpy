@@ -20,6 +20,7 @@ struct Args {
 enum RunMode {
     Tokens { file: String },
     Version,
+    Compile { file: String },
     None,
 }
 
@@ -27,6 +28,7 @@ fn resolve_run_mode(args: Args) -> RunMode {
     match (args.file, args.tokens, args.version) {
         (Some(file), true, false) => RunMode::Tokens { file },
         (_, _, true) => RunMode::Version,
+        (Some(file), false, false) => RunMode::Compile { file },
         _ => RunMode::None,
     }
 }
@@ -40,6 +42,9 @@ fn main() {
             generate_tokens(&content);
         }
         RunMode::Version => get_version(),
+        RunMode::Compile { file } => {
+            println!("{:?}", file)
+        }
         RunMode::None => {}
     }
 }
