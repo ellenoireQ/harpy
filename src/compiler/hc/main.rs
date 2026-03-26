@@ -127,6 +127,8 @@ fn main() {
                 // Do nothing
             }
         }
-        RunMode::None => {}
+        RunMode::None => {
+            eprintln!("error: no input files");
+        }
     }
 }
