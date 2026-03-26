@@ -1,13 +1,17 @@
 #![allow(clippy::all)]
 
+mod logs;
 mod utils;
 use std::fs;
 
 use clap::Parser;
 
-use crate::utils::{
-    tokens::{Token, TokenKind, generate_tokens},
-    version::get_version,
+use crate::{
+    logs::diagnostics::{DiagnosticKind, Span, emit_diagnostic},
+    utils::{
+        tokens::{Token, TokenKind, generate_tokens},
+        version::get_version,
+    },
 };
 
 #[derive(Parser, Debug)]
@@ -46,17 +50,37 @@ fn main() {
 
     match mode {
         RunMode::Tokens { file } => {
-            let content = fs::read_to_string(file).expect("failed to read file");
-            let ctx_tok = generate_tokens(&content);
+            let content = fs::read_to_string(&file).expect("failed to read file");
+            let (ctx_tok, lex_errors) = generate_tokens(&content);
             for token in ctx_tok {
                 println!("{:?} => {:?}", token.token, token.value)
+            }
+
+            for err in lex_errors {
+                let span = Span {
+                    file: file.clone(),
+                    line: err.line,
+                    column: err.column,
+                };
+                let message = format!("invalid token: '{}'", err.value);
+                emit_diagnostic(DiagnosticKind::Error, &span, &message);
             }
         }
         RunMode::Version => get_version(),
         RunMode::Compile { file } => {
-            let content = fs::read_to_string(file).expect("failed to read file");
-            let ctx_tok = generate_tokens(&content);
+            let content = fs::read_to_string(&file).expect("failed to read file");
+            let (ctx_tok, lex_errors) = generate_tokens(&content);
             let mut matched = false;
+
+            for err in lex_errors {
+                let span = Span {
+                    file: file.clone(),
+                    line: err.line,
+                    column: err.column,
+                };
+                let message = format!("invalid token: '{}'", err.value);
+                emit_diagnostic(DiagnosticKind::Error, &span, &message);
+            }
 
             let mut i = 0;
 
@@ -80,9 +104,12 @@ fn main() {
                     if let Some(TokenKind {
                         token: Token::Path,
                         value: path,
+                        ..
                     }) = ctx_tok.get(i + 1)
                     {
                         let mut j = i + 2;
+                        let mut has_left_brace = false;
+                        let mut has_right_brace = false;
 
                         while j < ctx_tok.len() {
                             if let TokenKind {
@@ -90,6 +117,7 @@ fn main() {
                                 ..
                             } = &ctx_tok[j]
                             {
+                                has_left_brace = true;
                                 let mut k = j + 1;
 
                                 while k < ctx_tok.len() {
@@ -98,6 +126,7 @@ fn main() {
                                         ..
                                     } = &ctx_tok[k]
                                     {
+                                        has_right_brace = true;
                                         println!("GET: {}", path);
                                         matched = true;
 
@@ -117,6 +146,41 @@ fn main() {
 
                             j += 1;
                         }
+
+                        if !has_left_brace {
+                            let span = Span {
+                                file: file.clone(),
+                                line: ctx_tok[i + 1].line,
+                                column: ctx_tok[i + 1].column,
+                            };
+                            emit_diagnostic(
+                                DiagnosticKind::Error,
+                                &span,
+                                "expected '{' after route path",
+                            );
+                        } else if !has_right_brace {
+                            let span = Span {
+                                file: file.clone(),
+                                line: ctx_tok[i + 1].line,
+                                column: ctx_tok[i + 1].column,
+                            };
+                            emit_diagnostic(
+                                DiagnosticKind::Error,
+                                &span,
+                                "expected '}' to close route body",
+                            );
+                        }
+                    } else {
+                        let span = Span {
+                            file: file.clone(),
+                            line: ctx_tok[i].line,
+                            column: ctx_tok[i].column,
+                        };
+                        emit_diagnostic(
+                            DiagnosticKind::Error,
+                            &span,
+                            "expected route path after GET",
+                        );
                     }
                 }
 

@@ -1,10 +1,16 @@
 use logos::Logos;
 
-use crate::utils::tokens;
-
 pub struct TokenKind {
     pub token: Token,
     pub value: String,
+    pub line: usize,
+    pub column: usize,
+}
+
+pub struct LexError {
+    pub value: String,
+    pub line: usize,
+    pub column: usize,
 }
 
 #[derive(Logos, Debug, PartialEq)]
@@ -52,19 +58,47 @@ pub enum Token {
     Whitespace,
 }
 
-pub fn generate_tokens(input: &str) -> Vec<TokenKind> {
+fn line_column_at(input: &str, byte_index: usize) -> (usize, usize) {
+    let mut line = 1;
+    let mut column = 1;
+
+    for byte in input.as_bytes().iter().take(byte_index) {
+        if *byte == b'\n' {
+            line += 1;
+            column = 1;
+        } else {
+            column += 1;
+        }
+    }
+
+    (line, column)
+}
+
+pub fn generate_tokens(input: &str) -> (Vec<TokenKind>, Vec<LexError>) {
     let mut lexer = Token::lexer(input);
     let mut tokens = Vec::new();
+    let mut errors = Vec::new();
 
     while let Some(token) = lexer.next() {
         let slice = lexer.slice().to_string();
+        let span = lexer.span();
+        let (line, column) = line_column_at(input, span.start);
 
         if let Ok(token) = token {
             tokens.push(TokenKind {
                 token,
                 value: slice,
+                line,
+                column,
+            });
+        } else {
+            errors.push(LexError {
+                value: slice,
+                line,
+                column,
             });
         }
     }
-    tokens
+
+    (tokens, errors)
 }
