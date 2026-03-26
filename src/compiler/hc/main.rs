@@ -17,18 +17,29 @@ struct Args {
     version: bool,
 }
 
+enum RunMode {
+    Tokens { file: String },
+    Version,
+    None,
+}
+
+fn resolve_run_mode(args: Args) -> RunMode {
+    match (args.file, args.tokens, args.version) {
+        (Some(file), true, false) => RunMode::Tokens { file },
+        (_, _, true) => RunMode::Version,
+        _ => RunMode::None,
+    }
+}
+
 fn main() {
-    let args = Args::parse();
+    let mode = resolve_run_mode(Args::parse());
 
-    if let Some(file) = args.file {
-        let content = fs::read_to_string(file).expect("failed to read file");
-
-        if args.tokens {
+    match mode {
+        RunMode::Tokens { file } => {
+            let content = fs::read_to_string(file).expect("failed to read file");
             generate_tokens(&content);
         }
-    }
-
-    if args.version {
-        get_version();
+        RunMode::Version => get_version(),
+        RunMode::None => {}
     }
 }
