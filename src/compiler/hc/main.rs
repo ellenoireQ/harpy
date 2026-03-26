@@ -4,7 +4,7 @@ use std::fs;
 use clap::Parser;
 
 use crate::utils::{
-    tokens::{Token, generate_tokens},
+    tokens::{Token, TokenKind, generate_tokens},
     version::get_version,
 };
 
@@ -46,14 +46,56 @@ fn main() {
         RunMode::Tokens { file } => {
             let content = fs::read_to_string(file).expect("failed to read file");
             let ctx_tok = generate_tokens(&content);
-
-            for token in &ctx_tok {
+            for token in ctx_tok {
                 println!("{:?} => {:?}", token.token, token.value)
             }
         }
         RunMode::Version => get_version(),
         RunMode::Compile { file } => {
-            println!("{:?}", file)
+            let content = fs::read_to_string(file).expect("failed to read file");
+            let ctx_tok = generate_tokens(&content);
+            let mut matched = false;
+
+            for window in ctx_tok.windows(7) {
+                if let [
+                    TokenKind {
+                        token: Token::Docs,
+                        value: docs,
+                    },
+                    TokenKind {
+                        token: Token::Get, ..
+                    },
+                    TokenKind {
+                        token: Token::Path,
+                        value,
+                    },
+                    TokenKind {
+                        token: Token::Fn, ..
+                    },
+                    TokenKind {
+                        token: Token::Identifier,
+                        ..
+                    },
+                    TokenKind {
+                        token: Token::Identifier,
+                        ..
+                    },
+                    TokenKind {
+                        token: Token::Execute,
+                        value: exec,
+                    },
+                ] = window
+                {
+                    println!("DOCS: {}", docs);
+                    println!("GET {}", value);
+                    println!("Do {}", exec);
+                    matched = true;
+                }
+            }
+
+            if !matched {
+                // Do nothing
+            }
         }
         RunMode::None => {}
     }
