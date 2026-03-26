@@ -42,6 +42,12 @@ pub enum Token {
     #[regex(r"/[a-zA-Z0-9/_-]*")]
     Path,
 
+    #[token("{")]
+    LeftBrace,
+
+    #[token("}")]
+    RightBrace,
+
     #[regex(r"[ \t\n\f]+", logos::skip)]
     Whitespace,
 }

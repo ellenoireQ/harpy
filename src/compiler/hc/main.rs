@@ -56,7 +56,7 @@ fn main() {
             let ctx_tok = generate_tokens(&content);
             let mut matched = false;
 
-            for window in ctx_tok.windows(7) {
+            for window in ctx_tok.windows(9) {
                 if let [
                     TokenKind {
                         token: Token::Docs,
@@ -77,12 +77,17 @@ fn main() {
                         ..
                     },
                     TokenKind {
-                        token: Token::Identifier,
+                        token: Token::LeftBrace,
                         ..
                     },
+                    TokenKind { value: anyKind, .. },
                     TokenKind {
                         token: Token::Execute,
                         value: exec,
+                    },
+                    TokenKind {
+                        token: Token::RightBrace,
+                        ..
                     },
                 ] = window
                 {
