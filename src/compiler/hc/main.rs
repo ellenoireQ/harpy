@@ -7,12 +7,15 @@ use crate::utils::{tokens::generate_tokens, version::get_version};
 
 #[derive(Parser, Debug)]
 struct Args {
+    /// Input file to compile or run
+    /// Example: hc main.hp
     file: Option<String>,
 
     /// Show tokens
     #[arg(short, long)]
     tokens: bool,
 
+    /// Print version
     #[arg(short, long)]
     version: bool,
 }
