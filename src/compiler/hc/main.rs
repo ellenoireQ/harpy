@@ -1,3 +1,5 @@
+#![allow(clippy::all)]
+
 mod utils;
 use std::fs;
 
@@ -65,8 +67,7 @@ fn main() {
             // This logic support to scan what is happen inside { }
             while i < ctx_tok.len() {
                 if let TokenKind {
-                    token: Token::Docs,
-                    ..
+                    token: Token::Docs, ..
                 } = &ctx_tok[i]
                 {
                     i += 1;
