@@ -29,6 +29,9 @@ pub enum Token {
     #[regex(r"#.*", logos::skip, allow_greedy = true)]
     Comment,
 
+    #[regex(r"##[^\n]*", allow_greedy = true)]
+    Docs,
+
     #[regex(r"/[a-zA-Z0-9/_-]*")]
     Path,
 
