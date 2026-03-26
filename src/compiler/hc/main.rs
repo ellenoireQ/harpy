@@ -3,7 +3,10 @@ use std::fs;
 
 use clap::Parser;
 
-use crate::utils::{tokens::generate_tokens, version::get_version};
+use crate::utils::{
+    tokens::{Token, generate_tokens},
+    version::get_version,
+};
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -42,7 +45,11 @@ fn main() {
     match mode {
         RunMode::Tokens { file } => {
             let content = fs::read_to_string(file).expect("failed to read file");
-            generate_tokens(&content);
+            let ctx_tok = generate_tokens(&content);
+
+            for token in &ctx_tok {
+                println!("{:?} => {:?}", token.token, token.value)
+            }
         }
         RunMode::Version => get_version(),
         RunMode::Compile { file } => {

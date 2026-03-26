@@ -1,5 +1,12 @@
 use logos::Logos;
 
+use crate::utils::tokens;
+
+pub struct TokenKind {
+    pub token: Token,
+    pub value: String,
+}
+
 #[derive(Logos, Debug, PartialEq)]
 pub enum Token {
     #[token("main")]
@@ -39,11 +46,19 @@ pub enum Token {
     Whitespace,
 }
 
-pub fn generate_tokens(input: &str) {
+pub fn generate_tokens(input: &str) -> Vec<TokenKind> {
     let mut lexer = Token::lexer(input);
+    let mut tokens = Vec::new();
 
     while let Some(token) = lexer.next() {
-        let slice = lexer.slice();
-        println!("{:?} {:?}", token, slice)
+        let slice = lexer.slice().to_string();
+
+        if let Ok(token) = token {
+            tokens.push(TokenKind {
+                token,
+                value: slice,
+            });
+        }
     }
+    tokens
 }
