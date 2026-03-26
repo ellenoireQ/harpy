@@ -30,6 +30,9 @@ pub enum Token {
     #[regex("[0-9]+")]
     Number,
 
+    #[regex(r#"\"([^\"\\]|\\.)*\""#)]
+    String,
+
     #[token("+")]
     Plus,
 

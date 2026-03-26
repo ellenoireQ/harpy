@@ -119,7 +119,6 @@ fn main() {
                             {
                                 has_left_brace = true;
                                 let mut k = j + 1;
-
                                 while k < ctx_tok.len() {
                                     if let TokenKind {
                                         token: Token::RightBrace,
@@ -131,6 +130,20 @@ fn main() {
                                         matched = true;
 
                                         println!("Body:");
+                                        for window in ctx_tok[j + 1..k].windows(3) {
+                                            if let [name_tok, equal_tok, value_tok] = window {
+                                                if name_tok.token == Token::Identifier
+                                                    && equal_tok.token == Token::Equal
+                                                    && (value_tok.token == Token::String
+                                                        || value_tok.token == Token::Execute)
+                                                {
+                                                    println!(
+                                                        "Variable {} = {}",
+                                                        name_tok.value, value_tok.value
+                                                    );
+                                                }
+                                            }
+                                        }
                                         for body in &ctx_tok[j + 1..k] {
                                             println!("{:?} {:?}", body.token, body.value);
                                         }
