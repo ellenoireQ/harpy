@@ -56,46 +56,70 @@ fn main() {
             let ctx_tok = generate_tokens(&content);
             let mut matched = false;
 
-            for window in ctx_tok.windows(9) {
-                if let [
-                    TokenKind {
-                        token: Token::Docs,
-                        value: docs,
-                    },
-                    TokenKind {
-                        token: Token::Get, ..
-                    },
-                    TokenKind {
-                        token: Token::Path,
-                        value,
-                    },
-                    TokenKind {
-                        token: Token::Fn, ..
-                    },
-                    TokenKind {
-                        token: Token::Identifier,
-                        ..
-                    },
-                    TokenKind {
-                        token: Token::LeftBrace,
-                        ..
-                    },
-                    TokenKind { value: anyKind, .. },
-                    TokenKind {
-                        token: Token::Execute,
-                        value: exec,
-                    },
-                    TokenKind {
-                        token: Token::RightBrace,
-                        ..
-                    },
-                ] = window
+            let mut i = 0;
+
+            // We started from zero
+            // Started from searching Docs, the docs is optional if not have it DO skipped
+            // if docs zero increased i by 1 and catched by Token::Get using ctx_tok.get(i)
+            // after that Token::Path continuing by increasing the index ctx_tox.get(i + 1)
+            // This logic support to scan what is happen inside { }
+            while i < ctx_tok.len() {
+                if let TokenKind {
+                    token: Token::Docs,
+                    ..
+                } = &ctx_tok[i]
                 {
-                    println!("DOCS: {}", docs);
-                    println!("GET {}", value);
-                    println!("Do {}", exec);
-                    matched = true;
+                    i += 1;
+                    continue;
                 }
+                if let Some(TokenKind {
+                    token: Token::Get, ..
+                }) = ctx_tok.get(i)
+                {
+                    if let Some(TokenKind {
+                        token: Token::Path,
+                        value: path,
+                    }) = ctx_tok.get(i + 1)
+                    {
+                        let mut j = i + 2;
+
+                        while j < ctx_tok.len() {
+                            if let TokenKind {
+                                token: Token::LeftBrace,
+                                ..
+                            } = &ctx_tok[j]
+                            {
+                                let mut k = j + 1;
+
+                                while k < ctx_tok.len() {
+                                    if let TokenKind {
+                                        token: Token::RightBrace,
+                                        ..
+                                    } = &ctx_tok[k]
+                                    {
+                                        println!("GET: {}", path);
+                                        matched = true;
+
+                                        println!("Body:");
+                                        for body in &ctx_tok[j + 1..k] {
+                                            println!("{:?} {:?}", body.token, body.value);
+                                        }
+
+                                        break;
+                                    }
+
+                                    k += 1;
+                                }
+
+                                break;
+                            }
+
+                            j += 1;
+                        }
+                    }
+                }
+
+                i += 1;
             }
 
             if !matched {
