@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{env, process::Command};
 
 pub fn get_local_git_ver() -> String {
     let output = Command::new("git")
@@ -12,6 +12,6 @@ pub fn get_local_git_ver() -> String {
 
 pub fn get_version() {
     let local = get_local_git_ver();
-
-    println!("{}", local)
+    let proj_ver = env!("CARGO_PKG_VERSION");
+    println!("hc (harpy-compiler) {} {}", proj_ver, local)
 }
