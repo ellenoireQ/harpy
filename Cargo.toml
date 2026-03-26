@@ -1,0 +1,15 @@
+[package]
+name = "harpy"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.6.0", features = ["derive"] }
+
+[[bin]]
+name = "hc"
+path = "src/compiler/hc/main.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
