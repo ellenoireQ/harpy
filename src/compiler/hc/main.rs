@@ -7,7 +7,7 @@ use std::fs;
 use clap::Parser;
 
 use crate::{
-    logs::diagnostics::{DiagnosticKind, Span, emit_diagnostic},
+    logs::diagnostics::Span,
     utils::{
         tokens::{Token, TokenKind, generate_tokens},
         version::get_version,
@@ -63,7 +63,7 @@ fn main() {
                     column: err.column,
                 };
                 let message = format!("invalid token: '{}'", err.value);
-                emit_diagnostic(DiagnosticKind::Error, &span, &message);
+                compiler_error!(&span, &message);
             }
         }
         RunMode::Version => get_version(),
@@ -79,7 +79,7 @@ fn main() {
                     column: err.column,
                 };
                 let message = format!("invalid token: '{}'", err.value);
-                emit_diagnostic(DiagnosticKind::Error, &span, &message);
+                compiler_error!(&span, &message);
             }
 
             let mut i = 0;
@@ -166,22 +166,14 @@ fn main() {
                                 line: ctx_tok[i + 1].line,
                                 column: ctx_tok[i + 1].column,
                             };
-                            emit_diagnostic(
-                                DiagnosticKind::Error,
-                                &span,
-                                "expected '{' after route path",
-                            );
+                            compiler_error!(&span, "expected '{' after route path");
                         } else if !has_right_brace {
                             let span = Span {
                                 file: file.clone(),
                                 line: ctx_tok[i + 1].line,
                                 column: ctx_tok[i + 1].column,
                             };
-                            emit_diagnostic(
-                                DiagnosticKind::Error,
-                                &span,
-                                "expected '}' to close route body",
-                            );
+                            compiler_error!(&span, "expected '}' to close route body");
                         }
                     } else {
                         let span = Span {
@@ -189,11 +181,7 @@ fn main() {
                             line: ctx_tok[i].line,
                             column: ctx_tok[i].column,
                         };
-                        emit_diagnostic(
-                            DiagnosticKind::Error,
-                            &span,
-                            "expected route path after GET",
-                        );
+                        compiler_error!(&span, "expected route path after GET");
                     }
                 }
 
