@@ -1,26 +1,22 @@
 use super::tokens::{Token, TokenKind};
+use crate::network::method::HttpMethod;
 
 /// Root AST node
 #[derive(Debug)]
 pub struct Program {
-    pub routes: Vec<Route>,
+    pub blocks: Vec<Block>,
 }
 
 /// AST node
 #[derive(Debug)]
-pub struct Route {
+pub struct Block {
     pub docs: Option<String>,
     pub method: HttpMethod,
     pub path: String,
     pub body: Vec<Assignment>,
 }
 
-#[derive(Debug)]
-pub enum HttpMethod {
-    Get,
-}
-
-/// Assignment statement in a route body.
+/// Assignment statement in a block body.
 #[derive(Debug)]
 pub struct Assignment {
     pub name: String,
@@ -78,8 +74,8 @@ struct ParserState<'a> {
 ///
 /// ```
 /// docs          = Docs
-/// route         = "GET" Path route_block
-/// route_block   = "main" Identifier "{" body "}" | "{" body "}"
+/// block         = "GET" Path block_body
+/// block_body    = "main" Identifier "{" body "}" | "{" body "}"
 /// body          = { assignment | return_stmt }
 /// assignment    = Identifier "=" assign_value
 /// assign_value  = String | Execute
@@ -112,9 +108,9 @@ impl<'a> ParserState<'a> {
     }
 
     fn parse_program(&mut self) -> Program {
-        let mut routes = Vec::new();
+        let mut blocks = Vec::new();
 
-        // Keep parsing until input is exhausted; each iteration targets one route.
+        // Keep parsing until input is exhausted; each iteration targets one block.
         while !self.at_end() {
             let docs = self.take_docs();
 
@@ -131,8 +127,8 @@ impl<'a> ParserState<'a> {
             let method = HttpMethod::Get;
             self.advance();
 
-            let Some(path_tok) = self.consume(Token::Path, "expected route path after GET") else {
-                self.synchronize_route();
+            let Some(path_tok) = self.consume(Token::Path, "expected path after GET") else {
+                self.synchronize_block();
                 continue;
             };
             let path = path_tok.value.clone();
@@ -144,7 +140,7 @@ impl<'a> ParserState<'a> {
                     .consume(Token::Identifier, "expected handler name after 'main'")
                     .is_none()
                 {
-                    self.synchronize_route();
+                    self.synchronize_block();
                     continue;
                 }
 
@@ -152,23 +148,23 @@ impl<'a> ParserState<'a> {
                     .consume(Token::LeftBrace, "expected '{' after handler name")
                     .is_none()
                 {
-                    self.synchronize_route();
+                    self.synchronize_block();
                     continue;
                 }
             } else if self
                 .consume(
                     Token::LeftBrace,
-                    "expected '{' or `main <handler> {` after route path",
+                    "expected '{' or `main <handler> {` after path",
                 )
                 .is_none()
             {
-                self.synchronize_route();
+                self.synchronize_block();
                 continue;
             }
 
             let body = self.parse_body();
 
-            routes.push(Route {
+            blocks.push(Block {
                 docs,
                 method,
                 path,
@@ -176,10 +172,10 @@ impl<'a> ParserState<'a> {
             });
         }
 
-        Program { routes }
+        Program { blocks }
     }
 
-    /// Parses statements inside route body until `}` or end of input.
+    /// Parses statements inside block body until `}` or end of input.
     fn parse_body(&mut self) -> Vec<Assignment> {
         let mut body = Vec::new();
 
@@ -214,10 +210,10 @@ impl<'a> ParserState<'a> {
         }
 
         if self
-            .consume(Token::RightBrace, "expected '}' to close route body")
+            .consume(Token::RightBrace, "expected '}' to close block body")
             .is_none()
         {
-            self.synchronize_route();
+            self.synchronize_block();
         }
 
         body
@@ -295,7 +291,7 @@ impl<'a> ParserState<'a> {
         matches!(self.current(), Some(tok) if tok.token == Token::Identifier && tok.value == "return")
     }
 
-    fn synchronize_route(&mut self) {
+    fn synchronize_block(&mut self) {
         // Skip tokens until a safe boundary (`}` or next `GET`) is found.
         while !self.at_end() {
             if self.matches(Token::RightBrace) {

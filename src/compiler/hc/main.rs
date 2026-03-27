@@ -2,6 +2,7 @@
 #![allow(non_snake_case)]
 
 mod logs;
+mod network;
 mod utils;
 use std::fs;
 
@@ -85,13 +86,13 @@ fn main() {
 
             match parse_program(&ctx_tok) {
                 Ok(program) => {
-                    for route in program.routes {
-                        if let Some(docs) = route.docs {
+                    for block in program.blocks {
+                        if let Some(docs) = block.docs {
                             println!("Docs: {}", docs);
                         }
 
-                        println!("Route: {:?} {}", route.method, route.path);
-                        for assignment in route.body {
+                        println!("Block: {:?} {}", block.method, block.path);
+                        for assignment in block.body {
                             match assignment.value {
                                 Value::String(value) => {
                                     println!("  {} = {}", assignment.name, value)
