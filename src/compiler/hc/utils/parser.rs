@@ -234,7 +234,8 @@ impl<'a> ParserState<'a> {
 
         if let Some(tok) = self.current() {
             match tok.token {
-                Token::Identifier
+                Token::Return
+                | Token::Identifier
                 | Token::String
                 | Token::Execute
                 | Token::Number
