@@ -274,15 +274,20 @@ impl<'a> ParserState<'a> {
     }
 
     fn take_docs(&mut self) -> Option<String> {
-        if let Some(tok) = self.current() {
+        let mut docs = Vec::new();
+        while let Some(tok) = self.current() {
             if tok.token == Token::Docs {
-                let docs = tok.value.clone();
+                docs.push(tok.value.clone());
                 self.advance();
-                return Some(docs);
+            } else {
+                break;
             }
         }
-
-        None
+        if docs.is_empty() {
+            None
+        } else {
+            Some(docs.join("\n"))
+        }
     }
 
     fn is_return_keyword(&self) -> bool {
