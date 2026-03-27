@@ -227,15 +227,9 @@ impl<'a> ParserState<'a> {
             self.push_error_here("expected return value after 'return'");
             return;
         }
-
         if let Some(tok) = self.current() {
             match tok.token {
-                Token::Return
-                | Token::Identifier
-                | Token::String
-                | Token::Execute
-                | Token::Number
-                | Token::Path => {
+                Token::Execute | Token::Identifier | Token::String => {
                     self.advance();
                 }
                 _ => {
@@ -288,7 +282,7 @@ impl<'a> ParserState<'a> {
     }
 
     fn is_return_keyword(&self) -> bool {
-        matches!(self.current(), Some(tok) if tok.token == Token::Identifier && tok.value == "return")
+        matches!(self.current(), Some(tok) if tok.token == Token::Return)
     }
 
     fn synchronize_block(&mut self) {

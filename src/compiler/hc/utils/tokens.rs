@@ -48,7 +48,7 @@ pub enum Token {
     #[regex(r"##[^\n]*", allow_greedy = true)]
     Docs,
 
-    #[regex(r"\return[a-zA-Z0-9/_-]*")]
+    #[token("return")]
     Return,
 
     #[regex(r"/[a-zA-Z0-9/_-]*")]
