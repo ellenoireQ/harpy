@@ -50,11 +50,11 @@ fn resolve_handler_name(block: &Block) -> String {
     }
 }
 
-/// Emits `let` bindings from block body assignments.
+/// Emits Rust statements from block body assignments.
 ///
-/// The last assignment is treated as an implicit return (no `let`, just the
-/// expression). If there are no assignments an empty string literal is
-/// returned.
+/// Assignments named `return` are emitted as explicit `return <expr>;` and end
+/// code emission for the function body. If there are no assignments an empty
+/// string literal is returned.
 fn emit_body(output: &mut String, body: &[Assignment]) {
     if body.is_empty() {
         output.push_str("    String::new()\n");
@@ -70,6 +70,11 @@ fn emit_body(output: &mut String, body: &[Assignment]) {
                 format!("{}()", fn_name)
             }
         };
+
+        if assignment.name == "return" {
+            output.push_str(&format!("    return {};\n", rhs));
+            break;
+        }
 
         if is_last {
             // Implicit return — just the expression

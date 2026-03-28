@@ -139,8 +139,8 @@ impl<'a> ParserState<'a> {
             if self.matches(Token::Fn) {
                 self.advance();
 
-                let Some(name_tok) = self
-                    .consume(Token::Identifier, "expected handler name after 'main'")
+                let Some(name_tok) =
+                    self.consume(Token::Identifier, "expected handler name after 'main'")
                 else {
                     self.synchronize_block();
                     continue;
@@ -185,7 +185,7 @@ impl<'a> ParserState<'a> {
 
         while !self.at_end() && !self.matches(Token::RightBrace) {
             if self.is_return_keyword() {
-                self.parse_return_statement();
+                body.extend(self.parse_return_statement());
                 continue;
             }
 
@@ -223,18 +223,34 @@ impl<'a> ParserState<'a> {
         body
     }
 
-    fn parse_return_statement(&mut self) {
+    fn parse_return_statement(&mut self) -> Vec<Assignment> {
+        let mut body = Vec::new();
+
         // Consume the `return` identifier first, then validate a return value.
         self.advance();
 
         if self.at_end() || self.matches(Token::RightBrace) {
             self.push_error_here("expected return value after 'return'");
-            return;
+            return body;
         }
+
         if let Some(tok) = self.current() {
+            let token_value = tok.value.clone();
+
             match tok.token {
-                Token::Execute | Token::Identifier | Token::String => {
+                Token::Execute => {
                     self.advance();
+                    body.push(Assignment {
+                        name: "return".to_string(),
+                        value: Value::Execute(token_value),
+                    })
+                }
+                Token::Identifier | Token::String => {
+                    self.advance();
+                    body.push(Assignment {
+                        name: "return".to_string(),
+                        value: Value::String(token_value),
+                    })
                 }
                 _ => {
                     self.push_error_here("expected value after 'return'");
@@ -242,6 +258,7 @@ impl<'a> ParserState<'a> {
                 }
             }
         }
+        body
     }
 
     fn parse_value(&mut self) -> Option<Value> {
