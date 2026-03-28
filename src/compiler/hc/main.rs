@@ -11,6 +11,7 @@ use clap::Parser;
 use crate::{
     logs::diagnostics::Span,
     utils::{
+        codegen::generate_rust_code,
         parser::{Value, parse_program},
         tokens::generate_tokens,
         version::get_version,
@@ -30,26 +31,33 @@ struct Args {
     /// Print version
     #[arg(short, long)]
     version: bool,
+
+    /// Output file for generated code
+    #[arg(short, long, default_value = "generated.rs")]
+    output: String,
 }
 
 enum RunMode {
     Tokens { file: String },
     Version,
-    Compile { file: String },
+    Compile { file: String, output: String },
     None,
 }
 
-fn resolve_run_mode(args: Args) -> RunMode {
-    match (args.file, args.tokens, args.version) {
-        (Some(file), true, false) => RunMode::Tokens { file },
+fn resolve_run_mode(args: &Args) -> RunMode {
+    match (&args.file, args.tokens, args.version) {
+        (Some(file), true, false) => RunMode::Tokens { file: file.clone() },
         (_, _, true) => RunMode::Version,
-        (Some(file), false, false) => RunMode::Compile { file },
+        (Some(file), false, false) => RunMode::Compile {
+            file: file.clone(),
+            output: args.output.clone(),
+        },
         _ => RunMode::None,
     }
 }
 
 fn main() {
-    let mode = resolve_run_mode(Args::parse());
+    let mode = resolve_run_mode(&Args::parse());
 
     match mode {
         RunMode::Tokens { file } => {
@@ -70,7 +78,7 @@ fn main() {
             }
         }
         RunMode::Version => get_version(),
-        RunMode::Compile { file } => {
+        RunMode::Compile { file, output } => {
             let content = fs::read_to_string(&file).expect("failed to read file");
             let (ctx_tok, lex_errors) = generate_tokens(&content);
 
@@ -86,14 +94,15 @@ fn main() {
 
             match parse_program(&ctx_tok) {
                 Ok(program) => {
-                    for block in program.blocks {
-                        if let Some(docs) = block.docs {
+                    // Print AST info
+                    for block in &program.blocks {
+                        if let Some(ref docs) = block.docs {
                             println!("Docs: {}", docs);
                         }
 
                         println!("Block: {:?} {}", block.method, block.path);
-                        for assignment in block.body {
-                            match assignment.value {
+                        for assignment in &block.body {
+                            match &assignment.value {
                                 Value::String(value) => {
                                     println!("  {} = {}", assignment.name, value)
                                 }
@@ -103,6 +112,10 @@ fn main() {
                             }
                         }
                     }
+
+                    // Generate Rust code
+                    let rust_code = generate_rust_code(&program);
+                    fs::write(&output, &rust_code).expect("failed to write output file");
                 }
                 Err(parse_errors) => {
                     for err in parse_errors {

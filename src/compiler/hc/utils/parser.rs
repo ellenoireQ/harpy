@@ -13,6 +13,7 @@ pub struct Block {
     pub docs: Option<String>,
     pub method: HttpMethod,
     pub path: String,
+    pub handler_name: Option<String>,
     pub body: Vec<Assignment>,
 }
 
@@ -133,16 +134,18 @@ impl<'a> ParserState<'a> {
             };
             let path = path_tok.value.clone();
 
+            let mut handler_name: Option<String> = None;
+
             if self.matches(Token::Fn) {
                 self.advance();
 
-                if self
+                let Some(name_tok) = self
                     .consume(Token::Identifier, "expected handler name after 'main'")
-                    .is_none()
-                {
+                else {
                     self.synchronize_block();
                     continue;
-                }
+                };
+                handler_name = Some(name_tok.value.clone());
 
                 if self
                     .consume(Token::LeftBrace, "expected '{' after handler name")
@@ -168,6 +171,7 @@ impl<'a> ParserState<'a> {
                 docs,
                 method,
                 path,
+                handler_name,
                 body,
             });
         }
