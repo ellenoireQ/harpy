@@ -4,7 +4,7 @@
 mod logs;
 mod network;
 mod utils;
-use std::fs;
+use std::{fs, path::PathBuf};
 
 use clap::Parser;
 
@@ -12,6 +12,7 @@ use crate::{
     logs::diagnostics::Span,
     utils::{
         codegen::generate_rust_code,
+        generate_bin::GenBin,
         parser::{Value, parse_program},
         tokens::generate_tokens,
         version::get_version,
@@ -116,6 +117,13 @@ fn main() {
                     // Generate Rust code
                     let rust_code = generate_rust_code(&program);
                     fs::write(&output, &rust_code).expect("failed to write output file");
+
+                    let genBin = GenBin {
+                        input: PathBuf::from(output),
+                        output: "output".to_string(),
+                    };
+
+                    genBin.build();
                 }
                 Err(parse_errors) => {
                     for err in parse_errors {
