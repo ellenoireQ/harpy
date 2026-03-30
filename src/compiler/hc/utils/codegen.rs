@@ -1,5 +1,3 @@
-use std::fmt::format;
-
 use super::parser::{Assignment, Block, Program, Value};
 
 /// Generates Rust source code from a parsed Harpy [`Program`].
@@ -67,7 +65,7 @@ fn emit_body(output: &mut String, body: &[Assignment]) {
         let is_last = i == body.len() - 1;
         let rhs = match &assignment.value {
             Value::String(s) => {
-                if assignment.name == "return" {
+                if assignment.name == "return" || assignment.name == "print" {
                     format!("{}", s)
                 } else {
                     format!("{}.to_string()", s)
@@ -82,6 +80,15 @@ fn emit_body(output: &mut String, body: &[Assignment]) {
         if assignment.name == "return" {
             output.push_str(&format!("    return {};\n", rhs));
             break;
+        }
+
+        if assignment.name == "print" {
+            output.push_str(&format!("    println!(\"{{}}\", {});\n", rhs));
+
+            if is_last {
+                output.push_str("    String::new()\n");
+            }
+            continue;
         }
 
         if is_last {
