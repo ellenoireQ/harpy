@@ -24,6 +24,37 @@ impl GenBin {
                 if output.status.success() {
                     let stdout = String::from_utf8_lossy(&output.stdout);
                     println!("\n{}", stdout);
+                    self.run();
+                } else {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    eprintln!("\n{}", stderr);
+                }
+            }
+            Err(e) => {
+                eprintln!("{}", e);
+            }
+        }
+    }
+
+    pub fn run(self) {
+        if self.output.is_empty() {
+            eprintln!("error: missing path output: {:?}", self.output);
+            return;
+        }
+
+        let run_path = if !self.output.starts_with('/') && !self.output.starts_with("./") {
+            format!("./{}", self.output)
+        } else {
+            self.output.clone()
+        };
+
+        let result = Command::new(run_path).output();
+
+        match result {
+            Ok(output) => {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    println!("\n{}", stdout);
                 } else {
                     let stderr = String::from_utf8_lossy(&output.stderr);
                     eprintln!("\n{}", stderr);
