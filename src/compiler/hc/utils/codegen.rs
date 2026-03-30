@@ -25,6 +25,11 @@ pub fn generate_rust_code(program: &Program) -> String {
         emit_body(&mut output, &block.body);
 
         output.push_str("}\n\n");
+
+        // Always append
+        output.push_str("fn main(){\n");
+        output.push_str(&format!("  {handler_name}();\n"));
+        output.push_str("}");
     }
 
     output
