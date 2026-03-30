@@ -188,6 +188,7 @@ impl<'a> ParserState<'a> {
                 body.extend(self.parse_return_statement());
                 continue;
             }
+            self.parse_print();
 
             let Some(name_tok) = self.consume(Token::Identifier, "expected variable name") else {
                 self.advance();
@@ -259,6 +260,25 @@ impl<'a> ParserState<'a> {
             }
         }
         body
+    }
+
+    fn parse_print(&mut self) {
+        self.advance();
+
+        // We expect '('
+        if matches!(self.current(), Some(tok) if tok.token == Token::LeftParent) {
+            self.advance();
+        }
+
+        // Takes inside left parent and right parent ('X')
+        if let Some(tok) = self.current() {
+            self.advance();
+        }
+
+        // ')'
+        if matches!(self.current(), Some(tok) if tok.token == Token::RightParent) {
+            self.advance();
+        }
     }
 
     fn parse_value(&mut self) -> Option<Value> {
