@@ -51,8 +51,17 @@ pub enum Token {
     #[token("return")]
     Return,
 
+    #[token("print")]
+    Print,
+
     #[regex(r"/[a-zA-Z0-9/_-]*")]
     Path,
+
+    #[token("(")]
+    LeftParent,
+
+    #[token(")")]
+    RightParent,
 
     #[token("{")]
     LeftBrace,
