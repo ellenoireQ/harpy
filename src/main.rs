@@ -33,15 +33,19 @@ struct Args {
     #[arg(short, long)]
     version: bool,
 
-    /// Output file for generated code
+    /// Input file for generated code
     #[arg(short, long, default_value = "generated.rs")]
+    input: String,
+
+    /// Output file for generated binary
+    #[arg(short, long, default_value = "output")]
     output: String,
 }
 
 enum RunMode {
     Tokens { file: String },
     Version,
-    Compile { file: String, output: String },
+    Compile { file: String, input: String, output: String },
     None,
 }
 
@@ -51,6 +55,7 @@ fn resolve_run_mode(args: &Args) -> RunMode {
         (_, _, true) => RunMode::Version,
         (Some(file), false, false) => RunMode::Compile {
             file: file.clone(),
+            input: args.input.clone(),
             output: args.output.clone(),
         },
         _ => RunMode::None,
@@ -79,7 +84,7 @@ fn main() {
             }
         }
         RunMode::Version => get_version(),
-        RunMode::Compile { file, output } => {
+        RunMode::Compile { file, input, output } => {
             let content = fs::read_to_string(&file).expect("failed to read file");
             let (ctx_tok, lex_errors) = generate_tokens(&content);
 
@@ -116,11 +121,11 @@ fn main() {
 
                     // Generate Rust code
                     let rust_code = generate_rust_code(&program);
-                    fs::write(&output, &rust_code).expect("failed to write output file");
+                    fs::write(&input, &rust_code).expect("failed to write output file");
 
                     let genBin = GenBin {
-                        input: PathBuf::from(output),
-                        output: "output".to_string(),
+                        input: PathBuf::from(input),
+                        output: PathBuf::from(output),
                     };
 
                     genBin.build();

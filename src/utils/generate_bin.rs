@@ -3,7 +3,7 @@ use std::process::Command;
 
 pub struct GenBin {
     pub input: PathBuf,
-    pub output: String,
+    pub output: PathBuf,
 }
 
 impl GenBin {
@@ -37,16 +37,12 @@ impl GenBin {
     }
 
     pub fn run(self) {
-        if self.output.is_empty() {
+        if !self.output.exists() {
             eprintln!("error: missing path output: {:?}", self.output);
             return;
         }
 
-        let run_path = if !self.output.starts_with('/') && !self.output.starts_with("./") {
-            format!("./{}", self.output)
-        } else {
-            self.output.clone()
-        };
+        let run_path = PathBuf::from(format!("./{}", self.output.display()));
 
         let result = Command::new(run_path).output();
 
