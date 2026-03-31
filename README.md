@@ -1,0 +1,46 @@
+## Syntax
+
+```ruby
+## Documentation lines start with ##
+GET /your-endpoint
+main handler_name {
+  print("Hello World")
+  name = "some value"
+  result = $external_function
+  return result
+}
+```
+
+### Tokens
+
+| Token        | Pattern              | Example            |
+|:-------------|:---------------------|:-------------------|
+| `GET`        | `GET`                | `GET`              |
+| `Path`       | `/[a-zA-Z0-9/_-]*`  | `/apis`            |
+| `Identifier` | `[a-zA-Z_]\w*`      | `handler_name`     |
+| `String`     | `"..."`              | `"Hello"`          |
+| `Execute`    | `$name`              | `$get_data`        |
+| `Number`     | `[0-9]+`             | `42`               |
+| `Docs`       | `## ...`             | `## my endpoint`   |
+| `Comment`    | `# ...`              | `# ignored`        |
+
+
+## Tech Stack
+
+- **Rust** — Core language
+- **[Logos](https://github.com/maciejhirsz/logos)** — Fast lexer generation
+- **[Clap](https://github.com/clap-rs/clap)** — CLI argument parsing
+
+---
+
+## License
+
+```
+Copyright 2026 Fitrian Musya
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
