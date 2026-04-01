@@ -80,6 +80,18 @@ fn emit_body(output: &mut String, body: &[Assignment]) {
                 let fn_name = s.trim_start_matches('$');
                 format!("{}()", fn_name)
             }
+            Value::Print(inner) => {
+                let inner_expr = match inner.as_ref() {
+                    Value::String(s) => format!("{}", s),
+                    Value::Execute(s) => {
+                        let fn_name = s.trim_start_matches('$');
+                        format!("{}()", fn_name)
+                    }
+                    Value::Print(_) => "String::new()".to_string(),
+                };
+
+                format!("{{ let __harpy_print_tmp = {inner_expr}; println!(\"{{}}\", __harpy_print_tmp); __harpy_print_tmp }}")
+            }
         };
 
         if assignment.name == "return" {

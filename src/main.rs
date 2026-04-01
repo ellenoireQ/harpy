@@ -115,6 +115,9 @@ fn main() {
                                 Value::Execute(value) => {
                                     println!("  {} = {}", assignment.name, value)
                                 }
+                                Value::Print(value) => {
+                                    println!("  {} = print({:?})", assignment.name, value)
+                                }
                             }
                         }
                     }

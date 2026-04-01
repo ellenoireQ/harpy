@@ -29,6 +29,7 @@ pub struct Assignment {
 pub enum Value {
     String(String),
     Execute(String),
+    Print(Box<Value>),
 }
 
 #[derive(Debug)]
@@ -77,11 +78,13 @@ struct ParserState<'a> {
 /// docs          = Docs
 /// block         = "GET" Path block_body
 /// block_body    = "main" Identifier "{" body "}" | "{" body "}"
-/// body          = { assignment | return_stmt }
+/// body          = { assignment | return_stmt | print_stmt }
 /// assignment    = Identifier "=" assign_value
 /// assign_value  = String | Execute
 /// return_stmt   = "return" return_value
 /// return_value  = Identifier | String | Execute | Number
+/// print_stmt    = "print" "(" print_value ")"
+/// print_value   = Identifier | String | Execute | Number
 /// ```
 ///
 /// Example:
@@ -278,30 +281,7 @@ impl<'a> ParserState<'a> {
             return None;
         }
 
-        if self.at_end() || self.matches(Token::RightParent) {
-            self.push_error_here("expected value inside print(...)");
-            let _ = self.consume(Token::RightParent, "expected ')' after print value");
-            return None;
-        }
-
-        let mut print_value: Option<Value> = None;
-
-        if let Some(tok) = self.current() {
-            match tok.token {
-                Token::Identifier | Token::String | Token::Number => {
-                    print_value = Some(Value::String(tok.value.clone()));
-                    self.advance();
-                }
-                Token::Execute => {
-                    print_value = Some(Value::Execute(tok.value.clone()));
-                    self.advance();
-                }
-                _ => {
-                    self.push_error_here("expected printable value inside print(...)");
-                    self.advance();
-                }
-            }
-        }
+        let print_value = self.parse_print_value();
 
         let _ = self.consume(Token::RightParent, "expected ')' after print value");
 
@@ -309,6 +289,35 @@ impl<'a> ParserState<'a> {
             name: "print".to_string(),
             value,
         })
+    }
+
+    fn parse_print_value(&mut self) -> Option<Value> {
+        if self.at_end() || self.matches(Token::RightParent) {
+            self.push_error_here("expected value inside print(...)");
+            return None;
+        }
+
+        if let Some(tok) = self.current() {
+            return match tok.token {
+                Token::Identifier | Token::String | Token::Number => {
+                    let value = Value::String(tok.value.clone());
+                    self.advance();
+                    Some(value)
+                }
+                Token::Execute => {
+                    let value = Value::Execute(tok.value.clone());
+                    self.advance();
+                    Some(value)
+                }
+                _ => {
+                    self.push_error_here("expected printable value inside print(...)");
+                    self.advance();
+                    None
+                }
+            };
+        }
+
+        None
     }
 
     fn parse_value(&mut self) -> Option<Value> {
@@ -323,6 +332,33 @@ impl<'a> ParserState<'a> {
                     let value = Value::Execute(tok.value.clone());
                     self.advance();
                     Some(value)
+                }
+                Token::Print
+                    if self
+                        .tokens
+                        .get(self.index + 1)
+                        .map(|next| next.token == Token::LeftParent)
+                        .unwrap_or(false) =>
+                {
+                    self.advance();
+                    self.advance();
+                    let print_value = self.parse_print_value().map(Box::new).map(Value::Print);
+                    let _ = self.consume(Token::RightParent, "expected ')' after print value");
+                    print_value
+                }
+                Token::Identifier
+                    if tok.value == "print"
+                        && self
+                            .tokens
+                            .get(self.index + 1)
+                            .map(|next| next.token == Token::LeftParent)
+                            .unwrap_or(false) =>
+                {
+                    self.advance();
+                    self.advance();
+                    let print_value = self.parse_print_value().map(Box::new).map(Value::Print);
+                    let _ = self.consume(Token::RightParent, "expected ')' after print value");
+                    print_value
                 }
                 _ => {
                     self.push_error_here("expected string or execute value");
@@ -353,11 +389,21 @@ impl<'a> ParserState<'a> {
     }
 
     fn is_return_keyword(&self) -> bool {
-        matches!(self.current(), Some(tok) if tok.token == Token::Return)
+        matches!(
+            self.current(),
+            Some(tok)
+                if tok.token == Token::Return
+                    || (tok.token == Token::Identifier && tok.value == "return")
+        )
     }
 
     fn is_print_keyword(&self) -> bool {
-        matches!(self.current(), Some(tok) if tok.token == Token::Print)
+        matches!(
+            self.current(),
+            Some(tok)
+                if tok.token == Token::Print
+                    || (tok.token == Token::Identifier && tok.value == "print")
+        )
     }
 
     fn synchronize_block(&mut self) {
