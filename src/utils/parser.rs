@@ -122,20 +122,21 @@ impl<'a> ParserState<'a> {
                 break;
             }
 
-            if !self.matches(Token::Get) {
-                self.push_error_here("expected 'GET' or docs line");
+            let method = HttpMethod::Get;
+            if self.matches(Token::Get) {
                 self.advance();
-                continue;
             }
 
-            let method = HttpMethod::Get;
-            self.advance();
-
-            let Some(path_tok) = self.consume(Token::Path, "expected path after GET") else {
-                self.synchronize_block();
-                continue;
+            let path = if self.matches(Token::Path) {
+                let path = self
+                    .current()
+                    .map(|tok| tok.value.clone())
+                    .unwrap_or_default();
+                self.advance();
+                path
+            } else {
+                String::new()
             };
-            let path = path_tok.value.clone();
 
             let mut handler_name: Option<String> = None;
 
@@ -407,14 +408,22 @@ impl<'a> ParserState<'a> {
     }
 
     fn synchronize_block(&mut self) {
-        // Skip tokens until a safe boundary (`}` or next `GET`) is found.
+        // Skip tokens until a safe boundary (`}`, docs, next `GET`, or next path) is found.
         while !self.at_end() {
             if self.matches(Token::RightBrace) {
                 self.advance();
                 return;
             }
 
+            if self.matches(Token::Docs) {
+                return;
+            }
+
             if self.matches(Token::Get) {
+                return;
+            }
+
+            if self.matches(Token::Path) {
                 return;
             }
 
