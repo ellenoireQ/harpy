@@ -18,6 +18,9 @@ pub enum Token {
     #[token("main")]
     Fn,
 
+    #[token("fn")]
+    Function,
+
     #[token("GET")]
     Get,
 
