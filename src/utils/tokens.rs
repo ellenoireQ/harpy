@@ -24,6 +24,18 @@ pub enum Token {
     #[token("GET")]
     Get,
 
+    #[token("POST")]
+    Post,
+
+    #[token("PUT")]
+    Put,
+
+    #[token("DELETE")]
+    Delete,
+
+    #[token("PATCH")]
+    Patch,
+
     #[regex(r"\$[a-zA-Z0-9/_-]*")]
     Execute,
 

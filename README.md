@@ -9,13 +9,16 @@ main handler_name {
   result = $external_function
   return result
 }
-```
 
 ### Tokens
 
 | Token        | Pattern              | Example            |
 |:-------------|:---------------------|:-------------------|
 | `GET`        | `GET`                | `GET`              |
+| `POST`       | `POST`               | `POST`             |
+| `PUT`        | `PUT`                | `PUT`              |
+| `DELETE`     | `DELETE`             | `DELETE`           |
+| `PATCH`      | `PATCH`              | `PATCH`            |
 | `Path`       | `/[a-zA-Z0-9/_-]*`  | `/apis`            |
 | `Identifier` | `[a-zA-Z_]\w*`      | `handler_name`     |
 | `String`     | `"..."`              | `"Hello"`          |

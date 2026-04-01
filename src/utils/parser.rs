@@ -76,7 +76,8 @@ struct ParserState<'a> {
 ///
 /// ```
 /// docs          = Docs
-/// block         = "GET" Path block_body
+/// method        = "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
+/// block         = method Path block_body
 /// block_body    = "main" Identifier "{" body "}" | "{" body "}"
 /// body          = { assignment | return_stmt | print_stmt }
 /// assignment    = Identifier "=" assign_value
@@ -121,12 +122,7 @@ impl<'a> ParserState<'a> {
             if self.at_end() {
                 break;
             }
-            let method = if self.matches(Token::Get) {
-                self.advance();
-                Some(HttpMethod::Get)
-            } else {
-                None
-            };
+            let method = self.parse_http_method();
 
             let path = if self.matches(Token::Path) {
                 let path = self
@@ -182,6 +178,35 @@ impl<'a> ParserState<'a> {
         }
 
         Program { blocks }
+    }
+
+    fn parse_http_method(&mut self) -> Option<HttpMethod> {
+        if self.matches(Token::Get) {
+            self.advance();
+            return Some(HttpMethod::Get);
+        }
+
+        if self.matches(Token::Post) {
+            self.advance();
+            return Some(HttpMethod::Post);
+        }
+
+        if self.matches(Token::Put) {
+            self.advance();
+            return Some(HttpMethod::Put);
+        }
+
+        if self.matches(Token::Delete) {
+            self.advance();
+            return Some(HttpMethod::Delete);
+        }
+
+        if self.matches(Token::Patch) {
+            self.advance();
+            return Some(HttpMethod::Patch);
+        }
+
+        None
     }
 
     /// Parses statements inside block body until `}` or end of input.
@@ -420,7 +445,12 @@ impl<'a> ParserState<'a> {
                 return;
             }
 
-            if self.matches(Token::Get) {
+            if self.matches(Token::Get)
+                || self.matches(Token::Post)
+                || self.matches(Token::Put)
+                || self.matches(Token::Delete)
+                || self.matches(Token::Patch)
+            {
                 return;
             }
 
