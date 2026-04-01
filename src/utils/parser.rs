@@ -11,8 +11,8 @@ pub struct Program {
 #[derive(Debug)]
 pub struct Block {
     pub docs: Option<String>,
-    pub method: HttpMethod,
-    pub path: String,
+    pub method: Option<HttpMethod>,
+    pub path: Option<String>,
     pub handler_name: Option<String>,
     pub body: Vec<Assignment>,
 }
@@ -121,11 +121,12 @@ impl<'a> ParserState<'a> {
             if self.at_end() {
                 break;
             }
-
-            let method = HttpMethod::Get;
-            if self.matches(Token::Get) {
+            let method = if self.matches(Token::Get) {
                 self.advance();
-            }
+                Some(HttpMethod::Get)
+            } else {
+                None
+            };
 
             let path = if self.matches(Token::Path) {
                 let path = self
@@ -133,9 +134,9 @@ impl<'a> ParserState<'a> {
                     .map(|tok| tok.value.clone())
                     .unwrap_or_default();
                 self.advance();
-                path
+                Some(path)
             } else {
-                String::new()
+                None
             };
 
             let mut handler_name: Option<String> = None;

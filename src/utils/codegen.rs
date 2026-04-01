@@ -44,6 +44,8 @@ fn resolve_handler_name(block: &Block) -> String {
     let method = format!("{:?}", block.method).to_lowercase();
     let path_part = block
         .path
+        .clone()
+        .unwrap_or_default()
         .trim_start_matches('/')
         .replace('/', "_")
         .replace('-', "_");
@@ -90,7 +92,9 @@ fn emit_body(output: &mut String, body: &[Assignment]) {
                     Value::Print(_) => "String::new()".to_string(),
                 };
 
-                format!("{{ let __harpy_print_tmp = {inner_expr}; println!(\"{{}}\", __harpy_print_tmp); __harpy_print_tmp }}")
+                format!(
+                    "{{ let __harpy_print_tmp = {inner_expr}; println!(\"{{}}\", __harpy_print_tmp); __harpy_print_tmp }}"
+                )
             }
         };
 

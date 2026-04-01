@@ -43,9 +43,15 @@ struct Args {
 }
 
 enum RunMode {
-    Tokens { file: String },
+    Tokens {
+        file: String,
+    },
     Version,
-    Compile { file: String, input: String, output: String },
+    Compile {
+        file: String,
+        input: String,
+        output: String,
+    },
     None,
 }
 
@@ -84,7 +90,11 @@ fn main() {
             }
         }
         RunMode::Version => get_version(),
-        RunMode::Compile { file, input, output } => {
+        RunMode::Compile {
+            file,
+            input,
+            output,
+        } => {
             let content = fs::read_to_string(&file).expect("failed to read file");
             let (ctx_tok, lex_errors) = generate_tokens(&content);
 
@@ -106,7 +116,7 @@ fn main() {
                             println!("Docs: {}", docs);
                         }
 
-                        println!("Block: {:?} {}", block.method, block.path);
+                        println!("Block: {:?} {:?}", block.method, block.path);
                         for assignment in &block.body {
                             match &assignment.value {
                                 Value::String(value) => {
