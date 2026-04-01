@@ -9,6 +9,7 @@ main handler_name {
   result = $external_function
   return result
 }
+```
 
 ### Tokens
 
