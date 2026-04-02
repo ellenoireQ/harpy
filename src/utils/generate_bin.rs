@@ -1,3 +1,4 @@
+use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -61,4 +62,25 @@ impl GenBin {
             }
         }
     }
+}
+
+pub fn generate_cargo_package(generated_file: &str) -> std::io::Result<()> {
+    let package_dir = PathBuf::from("bindings");
+    let src_dir = package_dir.join("src");
+    fs::create_dir_all(&src_dir)?;
+
+    let cargo_toml = r#"[package]
+name = "bindings"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+"#;
+
+    fs::write(package_dir.join("Cargo.toml"), cargo_toml)?;
+
+    let generated_code = fs::read_to_string(generated_file)?;
+    fs::write(src_dir.join("main.rs"), generated_code)?;
+
+    Ok(())
 }

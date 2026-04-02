@@ -12,7 +12,7 @@ use crate::{
     logs::diagnostics::Span,
     utils::{
         codegen::generate_rust_code,
-        generate_bin::GenBin,
+        generate_bin::{GenBin, generate_cargo_package},
         parser::{Value, parse_program},
         tokens::generate_tokens,
         version::get_version,
@@ -133,8 +133,12 @@ fn main() {
                     }
 
                     // Generate Rust code
-                    let rust_code = generate_rust_code(&program);
-                    fs::write(&input, &rust_code).expect("failed to write output file");
+                    //let rust_code = generate_rust_code(&program);
+                    //fs::write(&input, &rust_code).expect("failed to write output file");
+
+                    if let Err(err) = generate_cargo_package(&input) {
+                        eprintln!("error: failed to generate cargo package 'bindings': {}", err);
+                    }
 
                     let genBin = GenBin {
                         input: PathBuf::from(input),
